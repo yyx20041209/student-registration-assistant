@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>到校登记</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .arrival-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>到校登记</h1>
+                <div class="nav-buttons">
+                    <a href="index.html" class="btn btn-secondary">返回主页</a>
+                    <a href="login-select.html" class="btn btn-secondary">返回选择页面</a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="arrival-section">
+            <h2>登记信息</h2>
+            
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+            
+            <form id="arrival-form">
+                <div class="form-group">
+                    <label for="arrival_date">到校日期</label>
+                    <input type="date" id="arrival_date" name="arrival_date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="arrival_time">到校时间</label>
+                    <input type="time" id="arrival_time" name="arrival_time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transportation">交通方式</label>
+                    <input type="text" id="transportation" name="transportation" placeholder="如：火车、汽车、飞机等" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact_person">联系人</label>
+                    <input type="text" id="contact_person" name="contact_person" placeholder="紧急联系人姓名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact_phone">联系人电话</label>
+                    <input type="tel" id="contact_phone" name="contact_phone" placeholder="紧急联系人电话" required>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">提交登记</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            
+            if (!studentInfo) {
+                // 没有登录信息，跳转到登录页面
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('arrival_date').value = today;
+            
+            // 设置默认时间为当前时间
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('arrival_time').value = `${hours}:${minutes}`;
+        });
+        
+        // 表单提交
+        document.getElementById('arrival-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentInfo = localStorage.getItem('studentInfo');
+            const student = JSON.parse(studentInfo);
+            
+            const formData = {
+                student_id: student.student_id,
+                arrival_date: document.getElementById('arrival_date').value,
+                arrival_time: document.getElementById('arrival_time').value,
+                transportation: document.getElementById('transportation').value,
+                contact_person: document.getElementById('contact_person').value,
+                contact_phone: document.getElementById('contact_phone').value
+            };
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            // 显示加载状态
+            submitBtn.innerHTML = '提交中...';
+            submitBtn.disabled = true;
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // 调用后端接口提交登记
+            fetch('/api/student/arrival/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successMessage.textContent = '到校登记成功';
+                    successMessage.style.display = 'block';
+                    
+                    // 3秒后跳转到主页
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                } else {
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorMessage.textContent = '网络错误，请稍后重试';
+                errorMessage.style.display = 'block';
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                submitBtn.innerHTML = '提交登记';
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报到总览与实时状态监控</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        
+        /* 顶部指标卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .completed {
+            color: #27ae60;
+        }
+        
+        .stat-card .warning {
+            color: #e67e22;
+        }
+        
+        .stat-card .danger {
+            color: #e74c3c;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #27ae60;
+            border-radius: 4px;
+        }
+        
+        /* 筛选与搜索区域 */
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-group select,
+        .form-group input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        /* 数据表格 */
+        .table-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-in-progress {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-unregistered {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .task-status {
+            font-size: 18px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #219a52;
+        }
+        
+        .btn-warning {
+            background-color: #e67e22;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1>报到总览与实时状态监控</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="dorm-management.html" style="padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">宿舍管理</a>
+                <a href="login-select.html" style="padding: 8px 16px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">返回选择页面</a>
+            </div>
+        </div>
+        
+        <!-- 顶部指标卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>应到总人数</h3>
+                <div class="value" id="total-count">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>已报到人数</h3>
+                <div class="value completed" id="completed-count">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>报到率</h3>
+                <div class="value warning" id="registration-rate">0%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>未报到人数</h3>
+                <div class="value danger" id="unregistered-count">0</div>
+            </div>
+        </div>
+        
+        <!-- 筛选与搜索区域 -->
+        <div class="filter-section">
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label for="college">学院</label>
+                    <select id="college">
+                        <option value="">全部学院</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="major">专业</label>
+                    <select id="major">
+                        <option value="">全部专业</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status">状态</label>
+                    <select id="status">
+                        <option value="">全部状态</option>
+                        <option value="COMPLETED">已完成</option>
+                        <option value="IN_PROGRESS">进行中</option>
+                        <option value="UNREGISTERED">未报到</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="search">搜索</label>
+                    <input type="text" id="search" placeholder="学号或姓名">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="applyFilters()">筛选</button>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据表格 -->
+        <div class="table-section">
+            <table id="student-table">
+                <thead>
+                    <tr>
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>学院</th>
+                        <th>专业</th>
+                        <th>学费</th>
+                        <th>宿舍</th>
+                        <th>核验</th>
+                        <th>总体状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="student-table-body">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px;">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+        
+        // 加载仪表盘数据
+        async function loadDashboardData(filters = {}) {
+            try {
+                // 构建查询参数
+                const params = new URLSearchParams();
+                if (filters.college) params.append('college', filters.college);
+                if (filters.major) params.append('major', filters.major);
+                if (filters.status) params.append('status', filters.status);
+                if (filters.search) params.append('search', filters.search);
+                
+                const response = await fetch(`/api/admin/dashboard/?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStats(data.data.stats);
+                    updateFilters(data.data.filters);
+                    updateStudentTable(data.data.students);
+                } else {
+                    alert('加载数据失败：' + data.message);
+                }
+            } catch (error) {
+                alert('网络错误，请稍后重试');
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        // 更新统计数据
+        function updateStats(stats) {
+            document.getElementById('total-count').textContent = stats.total_count;
+            document.getElementById('completed-count').textContent = stats.completed_count;
+            document.getElementById('registration-rate').textContent = stats.registration_rate + '%';
+            document.getElementById('unregistered-count').textContent = stats.unregistered_count;
+            document.getElementById('progress-fill').style.width = stats.registration_rate + '%';
+        }
+        
+        // 更新筛选选项
+        function updateFilters(filters) {
+            // 更新学院选项
+            const collegeSelect = document.getElementById('college');
+            collegeSelect.innerHTML = '<option value="">全部学院</option>';
+            filters.colleges.forEach(college => {
+                const option = document.createElement('option');
+                option.value = college;
+                option.textContent = college;
+                collegeSelect.appendChild(option);
+            });
+            
+            // 更新专业选项
+            const majorSelect = document.getElementById('major');
+            majorSelect.innerHTML = '<option value="">全部专业</option>';
+            filters.majors.forEach(major => {
+                const option = document.createElement('option');
+                option.value = major;
+                option.textContent = major;
+                majorSelect.appendChild(option);
+            });
+        }
+        
+        // 更新学生表格
+        function updateStudentTable(students) {
+            const tableBody = document.getElementById('student-table-body');
+            
+            if (students.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">暂无数据</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            students.forEach(student => {
+                // 任务状态
+                const feeStatus = student.task_status['缴纳学费'] ? '✅' : '❌';
+                const dormStatus = student.task_status['宿舍入住办理'] ? '✅' : '❌';
+                const verifyStatus = student.task_status['领取军训物资'] ? '✅' : '❌';
+                
+                // 状态标签
+                let statusClass = '';
+                switch (student.status) {
+                    case 'COMPLETED':
+                        statusClass = 'status-completed';
+                        break;
+                    case 'IN_PROGRESS':
+                        statusClass = 'status-in-progress';
+                        break;
+                    case 'UNREGISTERED':
+                        statusClass = 'status-unregistered';
+                        break;
+                }
+                
+                html += `
+                    <tr>
+                        <td>${student.student_id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.college}</td>
+                        <td>${student.major}</td>
+                        <td class="task-status">${feeStatus}</td>
+                        <td class="task-status">${dormStatus}</td>
+                        <td class="task-status">${verifyStatus}</td>
+                        <td><span class="status-badge ${statusClass}">${student.status_display}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="viewDetails('${student.student_id}')">查看详情</button>
+                            <button class="btn btn-sm btn-warning" onclick="forceComplete('${student.student_id}')">强制通过</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+        
+        // 应用筛选
+        function applyFilters() {
+            const filters = {
+                college: document.getElementById('college').value,
+                major: document.getElementById('major').value,
+                status: document.getElementById('status').value,
+                search: document.getElementById('search').value
+            };
+            
+            loadDashboardData(filters);
+        }
+        
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('college').value = '';
+            document.getElementById('major').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('search').value = '';
+            
+            loadDashboardData();
+        }
+        
+        // 查看详情
+        function viewDetails(studentId) {
+            // 调用API获取学生详情
+            fetch(`/api/admin/student-detail/?student_id=${studentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const student = data.data;
+                        let taskHtml = '';
+                        student.tasks.forEach(task => {
+                            taskHtml += `
+                                <tr>
+                                    <td>${task.task_name}</td>
+                                    <td>${task.status_display}</td>
+                                    <td>${task.completed_time || '-'}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        const detailHtml = `
+                            <div style="padding: 20px; max-width: 600px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h3>学生详情</h3>
+                                    <button id="close-modal-btn" style="padding: 6px 12px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">关闭</button>
+                                </div>
+                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">学号</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.student_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">姓名</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.name}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">身份证号</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.id_card}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">学院</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.college}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">专业</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.major}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">手机号</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.phone}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">状态</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.status_display}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">创建时间</th>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${student.created_at}</td>
+                                    </tr>
+                                </table>
+                                
+                                <h4>任务状态</h4>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">任务名称</th>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">状态</th>
+                                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">完成时间</th>
+                                    </tr>
+                                    ${taskHtml}
+                                </table>
+                                
+                                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                    <button id="edit-student-btn" style="padding: 8px 16px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">编辑信息</button>
+                                    <button id="force-complete-btn" style="padding: 8px 16px; background-color: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer;">强制通过</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // 创建模态框
+                        const modal = document.createElement('div');
+                        modal.style.position = 'fixed';
+                        modal.style.top = '0';
+                        modal.style.left = '0';
+                        modal.style.width = '100%';
+                        modal.style.height = '100%';
+                        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                        modal.style.display = 'flex';
+                        modal.style.justifyContent = 'center';
+                        modal.style.alignItems = 'center';
+                        modal.style.zIndex = '1000';
+                        
+                        const modalContent = document.createElement('div');
+                        modalContent.style.backgroundColor = 'white';
+                        modalContent.style.borderRadius = '8px';
+                        modalContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                        modalContent.style.overflow = 'auto';
+                        modalContent.style.maxHeight = '80%';
+                        modalContent.innerHTML = detailHtml;
+                        
+                        modal.appendChild(modalContent);
+                        document.body.appendChild(modal);
+                        
+                        // 为关闭按钮添加点击事件
+                        const closeButton = modalContent.querySelector('#close-modal-btn');
+                        if (closeButton) {
+                            closeButton.onclick = () => {
+                                document.body.removeChild(modal);
+                            };
+                        }
+                        
+                        // 为编辑按钮添加点击事件
+                        const editButton = modalContent.querySelector('#edit-student-btn');
+                        if (editButton) {
+                            editButton.onclick = () => {
+                                document.body.removeChild(modal);
+                                editStudent(student.student_id);
+                            };
+                        }
+                        
+                        // 为强制通过按钮添加点击事件
+                        const forceCompleteButton = modalContent.querySelector('#force-complete-btn');
+                        if (forceCompleteButton) {
+                            forceCompleteButton.onclick = () => {
+                                document.body.removeChild(modal);
+                                forceComplete(student.student_id);
+                            };
+                        }
+                        
+                        // 点击模态框背景也可以关闭
+                        modal.onclick = (e) => {
+                            if (e.target === modal) {
+                                document.body.removeChild(modal);
+                            }
+                        };
+                    } else {
+                        alert('获取学生详情失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('网络错误，请稍后重试');
+                    console.error('Error viewing student details:', error);
+                });
+        }
+        
+        // 强制通过
+        function forceComplete(studentId) {
+            if (confirm(`确定要强制通过学生 ${studentId} 的报到吗？`)) {
+                // 调用API强制通过
+                fetch('/api/admin/force-complete/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `student_id=${studentId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('已成功强制通过学生报到');
+                        // 重新加载数据
+                        loadDashboardData();
+                    } else {
+                        alert('强制通过失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('网络错误，请稍后重试');
+                    console.error('Error forcing complete:', error);
+                });
+            }
+        }
+        
+        // 编辑学生信息
+        function editStudent(studentId) {
+            // 调用API获取学生详情
+            fetch(`/api/admin/student-detail/?student_id=${studentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const student = data.data;
+                        
+                        const editHtml = `
+                            <div style="padding: 20px; max-width: 600px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h3>编辑学生信息</h3>
+                                    <button id="close-edit-modal-btn" style="padding: 6px 12px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">关闭</button>
+                                </div>
+                                <form id="edit-student-form">
+                                    <input type="hidden" name="student_id" value="${student.student_id}">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">姓名</label>
+                                            <input type="text" name="name" value="${student.name}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">身份证号</label>
+                                            <input type="text" name="id_card" value="${student.id_card}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">学院</label>
+                                            <input type="text" name="college" value="${student.college}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">专业</label>
+                                            <input type="text" name="major" value="${student.major}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">手机号</label>
+                                            <input type="text" name="phone" value="${student.phone}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">状态</label>
+                                            <select name="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                                <option value="UNREGISTERED" ${student.status === 'UNREGISTERED' ? 'selected' : ''}>未报到</option>
+                                                <option value="IN_PROGRESS" ${student.status === 'IN_PROGRESS' ? 'selected' : ''}>进行中</option>
+                                                <option value="COMPLETED" ${student.status === 'COMPLETED' ? 'selected' : ''}>已完成</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="submit" style="padding: 8px 16px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">保存修改</button>
+                                        <button type="button" id="cancel-edit-btn" style="padding: 8px 16px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                                    </div>
+                                </form>
+                            </div>
+                        `;
+                        
+                        // 创建模态框
+                        const modal = document.createElement('div');
+                        modal.style.position = 'fixed';
+                        modal.style.top = '0';
+                        modal.style.left = '0';
+                        modal.style.width = '100%';
+                        modal.style.height = '100%';
+                        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                        modal.style.display = 'flex';
+                        modal.style.justifyContent = 'center';
+                        modal.style.alignItems = 'center';
+                        modal.style.zIndex = '1000';
+                        
+                        const modalContent = document.createElement('div');
+                        modalContent.style.backgroundColor = 'white';
+                        modalContent.style.borderRadius = '8px';
+                        modalContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                        modalContent.innerHTML = editHtml;
+                        
+                        modal.appendChild(modalContent);
+                        document.body.appendChild(modal);
+                        
+                        // 为关闭按钮添加点击事件
+                        const closeButton = modalContent.querySelector('#close-edit-modal-btn');
+                        if (closeButton) {
+                            closeButton.onclick = () => {
+                                document.body.removeChild(modal);
+                            };
+                        }
+                        
+                        // 为取消按钮添加点击事件
+                        const cancelButton = modalContent.querySelector('#cancel-edit-btn');
+                        if (cancelButton) {
+                            cancelButton.onclick = () => {
+                                document.body.removeChild(modal);
+                            };
+                        }
+                        
+                        // 为表单添加提交事件
+                        const form = modalContent.querySelector('#edit-student-form');
+                        if (form) {
+                            form.onsubmit = (e) => {
+                                e.preventDefault();
+                                
+                                const formData = new FormData(form);
+                                const formDataObj = Object.fromEntries(formData);
+                                
+                                // 调用API更新学生信息
+                                fetch('/api/admin/edit-student/', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: new URLSearchParams(formDataObj)
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('学生信息编辑成功');
+                                        document.body.removeChild(modal);
+                                        // 重新加载数据
+                                        loadDashboardData();
+                                    } else {
+                                        alert('编辑失败：' + data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    alert('网络错误，请稍后重试');
+                                    console.error('Error editing student:', error);
+                                });
+                            };
+                        }
+                        
+                        // 点击模态框背景也可以关闭
+                        modal.onclick = (e) => {
+                            if (e.target === modal) {
+                                document.body.removeChild(modal);
+                            }
+                        };
+                    } else {
+                        alert('获取学生详情失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('网络错误，请稍后重试');
+                    console.error('Error editing student:', error);
+                });
+        }
+    </script>
+</body>
+</html>

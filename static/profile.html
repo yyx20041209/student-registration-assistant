@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .profile-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group-half {
+            flex: 1;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>个人信息管理</h1>
+                <div class="nav-buttons">
+                    <a href="index.html" class="btn btn-secondary">返回主页</a>
+                    <a href="login-select.html" class="btn btn-secondary">返回选择页面</a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="profile-section">
+            <h2>基本信息</h2>
+            
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+            
+            <form id="profile-form">
+                <div class="form-row">
+                    <div class="form-group form-group-half">
+                        <label for="student_id">学号</label>
+                        <input type="text" id="student_id" name="student_id" disabled>
+                    </div>
+                    <div class="form-group form-group-half">
+                        <label for="name">姓名</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group form-group-half">
+                        <label for="id_card">身份证号</label>
+                        <input type="text" id="id_card" name="id_card" required>
+                    </div>
+                    <div class="form-group form-group-half">
+                        <label for="phone">手机号</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group form-group-half">
+                        <label for="college">学院</label>
+                        <input type="text" id="college" name="college" required>
+                    </div>
+                    <div class="form-group form-group-half">
+                        <label for="major">专业</label>
+                        <input type="text" id="major" name="major" required>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary" id="save-btn">保存修改</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载时获取学生信息
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            
+            if (!studentInfo) {
+                // 没有登录信息，跳转到登录页面
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const student = JSON.parse(studentInfo);
+            
+            // 填充表单数据
+            document.getElementById('student_id').value = student.student_id;
+            document.getElementById('name').value = student.name;
+            document.getElementById('id_card').value = student.id_card || '';
+            document.getElementById('phone').value = student.phone;
+            document.getElementById('college').value = student.college;
+            document.getElementById('major').value = student.major;
+        });
+        
+        // 表单提交
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentInfo = localStorage.getItem('studentInfo');
+            const student = JSON.parse(studentInfo);
+            
+            const formData = {
+                student_id: student.student_id,
+                name: document.getElementById('name').value,
+                id_card: document.getElementById('id_card').value,
+                phone: document.getElementById('phone').value,
+                college: document.getElementById('college').value,
+                major: document.getElementById('major').value
+            };
+            
+            const saveBtn = document.getElementById('save-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            // 显示加载状态
+            saveBtn.innerHTML = '保存中...';
+            saveBtn.disabled = true;
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // 调用后端接口更新信息
+            fetch('/api/student/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successMessage.textContent = '信息更新成功';
+                    successMessage.style.display = 'block';
+                    
+                    // 更新本地存储的学生信息
+                    const updatedStudent = {
+                        ...student,
+                        name: formData.name,
+                        id_card: formData.id_card,
+                        phone: formData.phone,
+                        college: formData.college,
+                        major: formData.major
+                    };
+                    localStorage.setItem('studentInfo', JSON.stringify(updatedStudent));
+                    
+                    // 3秒后跳转到主页
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                } else {
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorMessage.textContent = '网络错误，请稍后重试';
+                errorMessage.style.display = 'block';
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                saveBtn.innerHTML = '保存修改';
+                saveBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

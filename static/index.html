@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新生报到系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            font-size: 24px;
+        }
+        
+        .logout-btn {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        
+        .dashboard {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .dashboard h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .progress-section {
+            margin-bottom: 30px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .student-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .info-card p {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .tasks-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .tasks-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .task-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: box-shadow 0.3s;
+        }
+        
+        .task-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .task-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .task-actions {
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+        }
+        
+        .btn-success {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #43a047;
+        }
+        
+        .btn-disabled {
+            background-color: #bdbdbd;
+            color: white;
+            cursor: not-allowed;
+        }
+        
+        .completed-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .chat-message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background-color: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 18px 18px 0 18px;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .bot-message {
+            background-color: #f1f1f1;
+            padding: 10px 15px;
+            border-radius: 18px 18px 18px 0;
+            align-self: flex-start;
+        }
+        
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        
+        .chat-input button {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .dashboard,
+            .tasks-section {
+                padding: 20px;
+            }
+            
+            .task-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-window {
+                width: 300px;
+                height: 400px;
+                right: -20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>新生报到系统</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="profile.html" style="padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">个人信息</a>
+                <a href="arrival.html" style="padding: 8px 16px; background-color: #2ecc71; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">到校登记</a>
+                <a href="dorm-select.html" style="padding: 8px 16px; background-color: #f39c12; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">宿舍选择</a>
+                <a href="campus-map.html" style="padding: 8px 16px; background-color: #9b59b6; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">校园地图</a>
+                <a href="login-select.html" style="padding: 8px 16px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">返回选择页面</a>
+                <button class="logout-btn" onclick="logout()" style="padding: 8px 16px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer;">退出登录</button>
+            </div>
+        </div>
+        </header>
+        
+        <div class="dashboard">
+            <h2>报到概览</h2>
+            
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>报到进度</span>
+                    <span id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="student-info" id="student-info">
+                <div class="info-card">
+                    <h3>学号</h3>
+                    <p id="student-id"></p>
+                </div>
+                <div class="info-card">
+                    <h3>姓名</h3>
+                    <p id="student-name"></p>
+                </div>
+                <div class="info-card">
+                    <h3>专业</h3>
+                    <p id="student-major"></p>
+                </div>
+                <div class="info-card">
+                    <h3>学院</h3>
+                    <p id="student-college"></p>
+                </div>
+                <div class="info-card">
+                    <h3>报到状态</h3>
+                    <p id="student-status"></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tasks-section">
+            <h2>报到任务</h2>
+            <div id="task-grid" class="task-grid loading">加载中...</div>
+        </div>
+    </div>
+    
+    <!-- 智能问答助手 -->
+    <div class="chat-widget">
+        <button class="chat-button" id="chat-button">💬</button>
+        
+        <div class="chat-window" id="chat-window">
+            <div class="chat-header">
+                <h3>智能问答助手</h3>
+                <button onclick="closeChat()" style="background: none; border: none; color: white; cursor: pointer;">×</button>
+            </div>
+            <div class="chat-body" id="chat-body">
+                <div class="chat-message bot-message">
+                    你好！我是智能问答助手，有什么可以帮你的吗？
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="输入你的问题..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentId = localStorage.getItem('studentId');
+            if (!studentId) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadStudentInfo();
+            loadTasks();
+        });
+        
+        // 加载学生信息
+        function loadStudentInfo() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            if (studentInfo) {
+                const info = JSON.parse(studentInfo);
+                document.getElementById('student-id').textContent = info.student_id;
+                document.getElementById('student-name').textContent = info.name;
+                document.getElementById('student-major').textContent = info.major;
+                document.getElementById('student-college').textContent = info.college;
+                document.getElementById('student-status').textContent = info.status_display || '未报到';
+            }
+        }
+        
+        // 加载任务列表
+        async function loadTasks() {
+            const studentId = localStorage.getItem('studentId');
+            try {
+                const response = await fetch(`/api/student/tasks/?student_id=${studentId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayTasks(data.data.tasks);
+                    updateProgress(data.data.tasks);
+                } else {
+                    document.getElementById('task-grid').innerHTML = '<div class="error">加载任务失败</div>';
+                }
+            } catch (error) {
+                document.getElementById('task-grid').innerHTML = '<div class="error">网络错误，请稍后重试</div>';
+                console.error('Error loading tasks:', error);
+            }
+        }
+        
+        // 显示任务列表
+        function displayTasks(tasks) {
+            const taskGrid = document.getElementById('task-grid');
+            
+            if (tasks.length === 0) {
+                taskGrid.innerHTML = '<p>暂无任务</p>';
+                return;
+            }
+            
+            let html = '';
+            tasks.forEach(task => {
+                const statusClass = task.status === 'COMPLETED' ? 'status-completed' : 'status-pending';
+                const statusText = task.status === 'COMPLETED' ? '已完成' : '未完成';
+                const buttonClass = task.status === 'COMPLETED' ? 'btn-disabled' : 'btn btn-primary';
+                const buttonText = task.status === 'COMPLETED' ? '已完成' : '去办理';
+                const buttonDisabled = task.status === 'COMPLETED' ? 'disabled' : '';
+                
+                html += `
+                    <div class="task-card">
+                        <div class="task-header">
+                            <h3 class="task-name">${task.task_name}</h3>
+                            <span class="task-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="task-actions">
+                            <button class="${buttonClass}" ${buttonDisabled} onclick="${task.status === 'COMPLETED' ? '' : `handleTask(${task.id})`}">${buttonText}</button>
+                        </div>
+                        ${task.completed_time ? `<div class="completed-time">完成时间：${task.completed_time}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            taskGrid.innerHTML = html;
+        }
+        
+        // 更新进度条
+        function updateProgress(tasks) {
+            if (tasks.length === 0) return;
+            
+            const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
+            const progress = Math.round((completedTasks / tasks.length) * 100);
+            
+            document.getElementById('progress-percentage').textContent = `${progress}%`;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('progress-fill').textContent = `${progress}%`;
+        }
+        
+        // 处理任务
+        function handleTask(taskId) {
+            // 弹出确认框
+            if (confirm('确认完成此任务？')) {
+                completeTask(taskId);
+            }
+        }
+        
+        // 完成任务
+        async function completeTask(taskId) {
+            try {
+                const response = await fetch('/api/task/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `task_id=${taskId}&status=COMPLETED`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 局部更新任务状态，不需要刷新整个页面
+                    updateTaskStatus(taskId, data.data);
+                    // 更新学生状态
+                    updateStudentStatus(data.data.student_status_display);
+                    // 更新进度条
+                    loadTasks();
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            } catch (error) {
+                alert('网络错误，请稍后重试');
+                console.error('Error completing task:', error);
+            }
+        }
+        
+        // 更新学生状态
+        function updateStudentStatus(statusDisplay) {
+            document.getElementById('student-status').textContent = statusDisplay;
+            // 同时更新localStorage中的状态
+            const studentInfo = localStorage.getItem('studentInfo');
+            if (studentInfo) {
+                const info = JSON.parse(studentInfo);
+                info.status_display = statusDisplay;
+                localStorage.setItem('studentInfo', JSON.stringify(info));
+            }
+        }
+        
+        // 局部更新任务状态
+        function updateTaskStatus(taskId, taskData) {
+            // 找到对应的任务卡片
+            const taskCards = document.querySelectorAll('.task-card');
+            taskCards.forEach(card => {
+                // 查找包含该任务ID的按钮
+                const button = card.querySelector(`button[onclick*="handleTask(${taskId})"]`);
+                if (button) {
+                    // 更新状态显示
+                    const statusElement = card.querySelector('.task-status');
+                    if (statusElement) {
+                        statusElement.className = 'task-status status-completed';
+                        statusElement.textContent = '已完成';
+                    }
+                    
+                    // 更新按钮状态
+                    button.className = 'btn-disabled';
+                    button.textContent = '已完成';
+                    button.disabled = true;
+                    button.onclick = null;
+                    
+                    // 添加完成时间
+                    if (taskData.completed_time) {
+                        const completedTimeElement = document.createElement('div');
+                        completedTimeElement.className = 'completed-time';
+                        completedTimeElement.textContent = `完成时间：${taskData.completed_time}`;
+                        const taskActions = card.querySelector('.task-actions');
+                        if (taskActions) {
+                            taskActions.parentNode.insertBefore(completedTimeElement, taskActions.nextSibling);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('studentInfo');
+            localStorage.removeItem('studentId');
+            window.location.href = 'login.html';
+        }
+        
+        // 聊天功能
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        function closeChat() {
+            document.getElementById('chat-window').style.display = 'none';
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 添加用户消息
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // 先调用FAQ接口获取相关问题
+            fetch('/api/faqs/')
+            .then(response => response.json())
+            .then(faqData => {
+                if (faqData.success) {
+                    // 从FAQ中查找匹配的答案
+                    let answer = null;
+                    const faqs = faqData.data;
+                    
+                    // 简单的关键词匹配
+                    for (const faq of faqs) {
+                        if (faq.title.includes(message) || faq.content.includes(message)) {
+                            answer = faq.answer;
+                            break;
+                        }
+                    }
+                    
+                    if (answer) {
+                        // 如果找到匹配的FAQ答案
+                        addMessage(answer, 'bot');
+                    } else {
+                        // 如果没有找到匹配的FAQ，调用chat接口
+                        return fetch('/api/chat/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `question=${encodeURIComponent(message)}`
+                        });
+                    }
+                } else {
+                    // 如果FAQ接口失败，调用chat接口
+                    return fetch('/api/chat/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `question=${encodeURIComponent(message)}`
+                    });
+                }
+            })
+            .then(response => {
+                if (response) {
+                    return response.json();
+                }
+                return null;
+            })
+            .then(data => {
+                if (data && data.success) {
+                    addMessage(data.data.answer, 'bot');
+                } else if (!data) {
+                    // 已经通过FAQ回答了
+                } else {
+                    addMessage('抱歉，我暂时无法回答您的问题，请稍后再试。', 'bot');
+                }
+            })
+            .catch(error => {
+                addMessage('网络错误，请稍后重试。', 'bot');
+                console.error('Error:', error);
+            });
+        }
+        
+        function addMessage(text, type) {
+            const chatBody = document.getElementById('chat-body');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}-message`;
+            messageDiv.textContent = text;
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        
+        // 绑定聊天按钮点击事件
+        document.getElementById('chat-button').addEventListener('click', toggleChat);
+    </script>
+</body>
+</html>

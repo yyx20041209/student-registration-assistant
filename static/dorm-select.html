@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宿舍选择</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .dorm-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .dorm-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .dorm-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .dorm-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .dorm-item.selected {
+            border-color: #3498db;
+            background-color: #e3f2fd;
+        }
+        
+        .dorm-item.occupied {
+            background-color: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+        
+        .dorm-item h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .dorm-item p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .dorm-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>宿舍选择</h1>
+                <div class="nav-buttons">
+                    <a href="index.html" class="btn btn-secondary">返回主页</a>
+                    <a href="login-select.html" class="btn btn-secondary">返回选择页面</a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="dorm-section">
+            <h2>选择宿舍</h2>
+            
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+            
+            <div class="form-group">
+                <label for="building">宿舍楼</label>
+                <select id="building" name="building" onchange="loadDorms()">
+                    <option value="">请选择宿舍楼</option>
+                    <option value="1号楼">1号楼</option>
+                    <option value="2号楼">2号楼</option>
+                    <option value="3号楼">3号楼</option>
+                    <option value="4号楼">4号楼</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>可用宿舍</label>
+                <div class="dorm-list" id="dorm-list">
+                    <p style="text-align: center; color: #999;">请先选择宿舍楼</p>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button type="button" class="btn btn-primary" id="select-btn" disabled>确认选择</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedDorm = null;
+        
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            
+            if (!studentInfo) {
+                // 没有登录信息，跳转到登录页面
+                window.location.href = 'login.html';
+                return;
+            }
+        });
+        
+        // 加载宿舍列表
+        function loadDorms() {
+            const building = document.getElementById('building').value;
+            const dormList = document.getElementById('dorm-list');
+            
+            if (!building) {
+                dormList.innerHTML = '<p style="text-align: center; color: #999;">请先选择宿舍楼</p>';
+                selectedDorm = null;
+                document.getElementById('select-btn').disabled = true;
+                return;
+            }
+            
+            // 模拟宿舍数据（实际项目中应从后端获取）
+            const dorms = [
+                { room: '101', beds: 4, available: 2 },
+                { room: '102', beds: 4, available: 1 },
+                { room: '103', beds: 4, available: 0 },
+                { room: '104', beds: 4, available: 3 },
+                { room: '201', beds: 4, available: 2 },
+                { room: '202', beds: 4, available: 0 },
+                { room: '203', beds: 4, available: 4 },
+                { room: '204', beds: 4, available: 1 }
+            ];
+            
+            let html = '';
+            dorms.forEach(dorm => {
+                const isOccupied = dorm.available === 0;
+                html += `
+                    <div class="dorm-item ${isOccupied ? 'occupied' : ''}" data-room="${dorm.room}" onclick="selectDorm(this, ${isOccupied ? 'false' : 'true'})">
+                        <h3>${building}-${dorm.room}</h3>
+                        <p>剩余床位: ${dorm.available}/${dorm.beds}</p>
+                    </div>
+                `;
+            });
+            
+            dormList.innerHTML = html;
+            selectedDorm = null;
+            document.getElementById('select-btn').disabled = true;
+        }
+        
+        // 选择宿舍
+        function selectDorm(element, isAvailable) {
+            if (!isAvailable) return;
+            
+            // 移除其他宿舍的选中状态
+            document.querySelectorAll('.dorm-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 添加当前宿舍的选中状态
+            element.classList.add('selected');
+            selectedDorm = element.dataset.room;
+            
+            // 启用确认按钮
+            document.getElementById('select-btn').disabled = false;
+        }
+        
+        // 确认选择
+        document.getElementById('select-btn').addEventListener('click', function() {
+            if (!selectedDorm) return;
+            
+            const studentInfo = localStorage.getItem('studentInfo');
+            const student = JSON.parse(studentInfo);
+            const building = document.getElementById('building').value;
+            
+            const formData = {
+                student_id: student.student_id,
+                building: building,
+                room: selectedDorm
+            };
+            
+            const selectBtn = document.getElementById('select-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            // 显示加载状态
+            selectBtn.innerHTML = '提交中...';
+            selectBtn.disabled = true;
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // 调用后端接口提交选择
+            fetch('/api/student/dorm-select/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successMessage.textContent = '宿舍选择成功';
+                    successMessage.style.display = 'block';
+                    
+                    // 3秒后跳转到主页
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                } else {
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorMessage.textContent = '网络错误，请稍后重试';
+                errorMessage.style.display = 'block';
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                selectBtn.innerHTML = '确认选择';
+                selectBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

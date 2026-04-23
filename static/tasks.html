@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新生报到任务管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .student-info {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .student-info h2 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .student-info p {
+            margin: 5px 0;
+        }
+        
+        .task-list {
+            margin-top: 30px;
+        }
+        
+        .task-list h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .task-status {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .task-actions {
+            margin-left: 20px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #1976d2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1565c0;
+        }
+        
+        .btn-success {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #43a047;
+        }
+        
+        .btn-disabled {
+            background-color: #bdbdbd;
+            color: white;
+            cursor: not-allowed;
+        }
+        
+        .status-completed {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #ff9800;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 15px;
+            }
+            
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .task-actions {
+                margin-left: 0;
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>新生报到任务管理</h1>
+        
+        <div id="message" class="error" style="display: none;"></div>
+        
+        <div class="student-info" id="student-info">
+            <h2>学生信息</h2>
+            <p><strong>学号：</strong><span id="student-id"></span></p>
+            <p><strong>姓名：</strong><span id="student-name"></span></p>
+            <p><strong>专业：</strong><span id="student-major"></span></p>
+            <p><strong>学院：</strong><span id="student-college"></span></p>
+            <p><strong>报到状态：</strong><span id="student-status"></span></p>
+        </div>
+        
+        <div class="task-list">
+            <h2>报到任务</h2>
+            <div id="task-list" class="loading">加载中...</div>
+        </div>
+    </div>
+    
+    <script>
+        // 学生学号，可根据实际情况修改
+        const studentId = '20260201';
+        
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchStudentTasks();
+        });
+        
+        // 获取学生任务列表
+        async function fetchStudentTasks() {
+            try {
+                const response = await fetch(`/api/student/tasks/?student_id=${studentId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStudentInfo(data.data.student);
+                    displayTasks(data.data.tasks);
+                } else {
+                    showMessage('错误：' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误，请稍后重试', 'error');
+                console.error('Error fetching tasks:', error);
+            }
+        }
+        
+        // 显示学生信息
+        function displayStudentInfo(student) {
+            document.getElementById('student-id').textContent = student.student_id;
+            document.getElementById('student-name').textContent = student.name;
+            document.getElementById('student-major').textContent = student.major;
+            document.getElementById('student-college').textContent = student.college;
+            document.getElementById('student-status').textContent = student.status_display;
+        }
+        
+        // 显示任务列表
+        function displayTasks(tasks) {
+            const taskList = document.getElementById('task-list');
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<p>暂无任务</p>';
+                return;
+            }
+            
+            let html = '';
+            tasks.forEach(task => {
+                const statusClass = task.status === 'COMPLETED' ? 'status-completed' : 'status-pending';
+                const buttonClass = task.status === 'COMPLETED' ? 'btn-disabled' : 'btn btn-success';
+                const buttonText = task.status === 'COMPLETED' ? '已完成' : '完成';
+                const buttonDisabled = task.status === 'COMPLETED' ? 'disabled' : '';
+                
+                html += `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <div class="task-name">${task.task_name}</div>
+                            <div class="task-status ${statusClass}">${task.status_display}</div>
+                            ${task.completed_time ? `<div class="task-completed-time" style="font-size: 12px; color: #999;">完成时间：${task.completed_time}</div>` : ''}
+                        </div>
+                        <div class="task-actions">
+                            <button class="${buttonClass}" ${buttonDisabled} onclick="completeTask(${task.id})">${buttonText}</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            taskList.innerHTML = html;
+        }
+        
+        // 完成任务
+        async function completeTask(taskId) {
+            try {
+                const response = await fetch('/api/task/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `task_id=${taskId}&status=COMPLETED`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('任务完成成功！', 'success');
+                    // 重新获取任务列表
+                    fetchStudentTasks();
+                } else {
+                    showMessage('错误：' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误，请稍后重试', 'error');
+                console.error('Error completing task:', error);
+            }
+        }
+        
+        // 显示消息
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = type;
+            messageDiv.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
