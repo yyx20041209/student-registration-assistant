@@ -31,6 +31,9 @@
 
 6. **校园地图**
    - 交互式校园地图
+   - 支持选择学校（青岛大学、山东大学等）
+   - 校园建筑列表展示
+   - 一键跳转高德地图导航
    - 建筑信息和导航
    - 地点详情查看
 
@@ -111,7 +114,10 @@ student-registration-assistant/
 │   ├── profile.html           # 个人信息页面
 │   ├── arrival.html           # 到校登记页面
 │   ├── dorm-select.html       # 宿舍选择页面
-│   ├── campus-map.html        # 校园地图页面
+│   ├── campus-map-simple.html  # 校园地图页面（高德导航版）
+│   ├── campus-map-amap.html    # 校园地图页面（高德增强版）
+│   ├── campus-map-real.html    # 校园地图页面（实时搜索版）
+│   ├── campus-map.html         # 校园地图页面（静态版）
 │   ├── admin.html             # 管理员主页面
 │   └── dorm-management.html  # 宿舍管理页面
 ├── media/                     # 媒体文件目录
