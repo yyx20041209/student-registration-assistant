@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园地图</title>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b26c6b4539ddef4ab53c95d07fe64cd9"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .logout-btn {
+            float: right;
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .school-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .school-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .school-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .building-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .building-list h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .current-school {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        
+        .building-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .building-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .building-card h3 {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        
+        .building-card p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .building-card .navigate-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .building-card .navigate-btn:hover {
+            background: #219a52;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            height: 600px;
+        }
+        
+        #amap-map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .tips {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+            <h1>🏫 校园地图导航</h1>
+            <p style="color: #666; margin-bottom: 10px;">选择您的学校，查看校园建筑位置，一键导航</p>
+            
+            <div class="school-selector">
+                <button class="school-btn" onclick="selectSchool('青岛大学')">🏫 青岛大学</button>
+                <button class="school-btn" onclick="selectSchool('山东大学')">🏫 山东大学</button>
+                <button class="school-btn" onclick="selectSchool('中国海洋大学')">🏫 中国海洋大学</button>
+                <button class="school-btn" onclick="selectSchool('青岛科技大学')">🏫 青岛科技大学</button>
+                <button class="school-btn" onclick="selectSchool('青岛理工大学')">🏫 青岛理工大学</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="building-list">
+                <h2>🏢 校园建筑</h2>
+                
+                <div class="tips">
+                    💡 点击上方学校名称，查看校园建筑<br>
+                    点击建筑卡片，再点击导航按钮打开高德地图
+                </div>
+                
+                <div id="current-school" class="current-school" style="display: none;">
+                    当前学校: <span id="school-name">-</span>
+                </div>
+                
+                <div id="buildings-container">
+                    <p style="color: #999; text-align: center; padding: 40px;">
+                        请在上方选择您的学校
+                    </p>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <div id="amap-map"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let map = null;
+        
+        const schoolData = {
+            '青岛大学': {
+                center: [120.466, 36.105],
+                buildings: [
+                    { name: '青岛大学图书馆', address: '青岛市宁夏路308号', type: 'library', icon: '📚' },
+                    { name: '青大学生宿舍', address: '校内宿舍区', type: 'dorm', icon: '🏠' },
+                    { name: '青大第一食堂', address: '校内食堂区', type: 'canteen', icon: '🍽️' },
+                    { name: '青大教学楼', address: '教学楼A区', type: 'teaching', icon: '🏫' },
+                    { name: '青大体育馆', address: '校内体育场', type: 'sports', icon: '🏃' },
+                    { name: '青大宿舍楼2号楼', address: '宿舍区2号楼', type: 'dorm', icon: '🏠' },
+                    { name: '青大食堂二餐厅', address: '校内二餐厅', type: 'canteen', icon: '🍽️' },
+                    { name: '青大实验楼', address: '实验中心', type: 'teaching', icon: '🏫' }
+                ]
+            },
+            '山东大学': {
+                center: [117.057, 36.651],
+                buildings: [
+                    { name: '山东大学图书馆', address: '济南市山大南路27号', type: 'library', icon: '📚' },
+                    { name: '山大学生宿舍', address: '校内宿舍区', type: 'dorm', icon: '🏠' },
+                    { name: '山大食堂', address: '校内食堂区', type: 'canteen', icon: '🍽️' },
+                    { name: '山大教学楼', address: '教学楼群', type: 'teaching', icon: '🏫' },
+                    { name: '山大体育馆', address: '校内体育馆', type: 'sports', icon: '🏃' }
+                ]
+            },
+            '中国海洋大学': {
+                center: [120.485, 36.067],
+                buildings: [
+                    { name: '海大图书馆', address: '青岛市松岭路238号', type: 'library', icon: '📚' },
+                    { name: '海大学生宿舍', address: '校内宿舍区', type: 'dorm', icon: '🏠' },
+                    { name: '海大食堂', address: '校内食堂区', type: 'canteen', icon: '🍽️' },
+                    { name: '海大教学楼', address: '教学楼区', type: 'teaching', icon: '🏫' },
+                    { name: '海大体育馆', address: '校内体育馆', type: 'sports', icon: '🏃' }
+                ]
+            },
+            '青岛科技大学': {
+                center: [120.458, 36.089],
+                buildings: [
+                    { name: '科大图书馆', address: '青岛市郑州路53号', type: 'library', icon: '📚' },
+                    { name: '科大宿舍', address: '校内宿舍区', type: 'dorm', icon: '🏠' },
+                    { name: '科大食堂', address: '校内食堂区', type: 'canteen', icon: '🍽️' },
+                    { name: '科大教学楼', address: '教学楼区', type: 'teaching', icon: '🏫' },
+                    { name: '科大体育馆', address: '校内体育馆', type: 'sports', icon: '🏃' }
+                ]
+            },
+            '青岛理工大学': {
+                center: [120.432, 36.137],
+                buildings: [
+                    { name: '理工大图书馆', address: '青岛市抚顺路11号', type: 'library', icon: '📚' },
+                    { name: '理工大宿舍', address: '校内宿舍区', type: 'dorm', icon: '🏠' },
+                    { name: '理工大食堂', address: '校内食堂区', type: 'canteen', icon: '🍽️' },
+                    { name: '理工大教学楼', address: '教学楼区', type: 'teaching', icon: '🏫' },
+                    { name: '理工大体育馆', address: '校内体育馆', type: 'sports', icon: '🏃' }
+                ]
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            if (!studentInfo) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            initMap();
+        });
+        
+        function initMap() {
+            if (typeof AMap === 'undefined') {
+                setTimeout(initMap, 1000);
+                return;
+            }
+            
+            map = new AMap.Map('amap-map', {
+                zoom: 15,
+                center: [120.38, 36.06],
+                mapStyle: 'amap://styles/normal'
+            });
+            
+            map.addControl(new AMap.ToolBar({ position: 'RB' }));
+            map.addControl(new AMap.Scale({ position: 'LB' }));
+        }
+        
+        function selectSchool(schoolName) {
+            const data = schoolData[schoolName];
+            if (!data) {
+                alert('未找到该校数据');
+                return;
+            }
+            
+            document.getElementById('current-school').style.display = 'block';
+            document.getElementById('school-name').textContent = schoolName;
+            
+            map.setCenter(data.center);
+            map.setZoom(16);
+            
+            map.clearMap();
+            
+            const schoolMarker = new AMap.Marker({
+                position: data.center,
+                title: schoolName,
+                icon: new AMap.Icon({
+                    size: new AMap.Size(40, 40),
+                    image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                    imageSize: new AMap.Size(40, 40)
+                }),
+                offset: new AMap.Pixel(-20, -40)
+            });
+            schoolMarker.setMap(map);
+            
+            const buildings = data.buildings;
+            const offsetX = 0.002;
+            const offsetY = 0.001;
+            
+            buildings.forEach((building, index) => {
+                const position = [
+                    data.center[0] + offsetX * (Math.random() - 0.5),
+                    data.center[1] + offsetY * (Math.random() - 0.5)
+                ];
+                building.position = position;
+                
+                const marker = new AMap.Marker({
+                    position: position,
+                    title: building.name,
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(30, 30),
+                        image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                        imageSize: new AMap.Size(30, 30)
+                    }),
+                    offset: new AMap.Pixel(-15, -30)
+                });
+                
+                const infoWindow = new AMap.InfoWindow({
+                    content: `
+                        <div style="padding: 10px;">
+                            <h3>${building.icon} ${building.name}</h3>
+                            <p>地址: ${building.address}</p>
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                marker.on('click', function() {
+                    infoWindow.open(map, marker.getPosition());
+                });
+                
+                marker.setMap(map);
+            });
+            
+            renderBuildingList(schoolName, buildings);
+        }
+        
+        function renderBuildingList(schoolName, buildings) {
+            const container = document.getElementById('buildings-container');
+            
+            let html = '';
+            buildings.forEach(building => {
+                html += `
+                    <div class="building-card" onclick="focusBuilding('${building.position[0]}', '${building.position[1]}')">
+                        <h3>${building.icon} ${building.name}</h3>
+                        <p>📍 ${building.address}</p>
+                        <button class="navigate-btn" onclick="event.stopPropagation(); navigateTo('${building.name}', '${building.address}')">
+                            🧭 打开高德地图导航
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function focusBuilding(lng, lat) {
+            map.setCenter([lng, lat]);
+            map.setZoom(17);
+        }
+        
+        function navigateTo(name, address) {
+            const searchUrl = `https://www.amap.com/search?query=${encodeURIComponent(name + ' ' + address)}`;
+            window.open(searchUrl, '_blank');
+        }
+        
+        function logout() {
+            if (confirm('确定退出登录？')) {
+                localStorage.removeItem('studentInfo');
+                window.location.href = 'login-select.html';
+            }
+        }
+    </script>
+</body>
+</html>

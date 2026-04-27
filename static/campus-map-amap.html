@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园地图</title>
+    <!-- 高德地图API -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b26c6b4539ddef4ab53c95d07fe64cd9"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .map-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background-color: #e0e0e0;
+            color: #333;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .map-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #amap-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .static-map-container {
+            display: none;
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .static-map-container.active {
+            display: block;
+        }
+        
+        .map-image {
+            width: 100%;
+            border-radius: 8px;
+        }
+        
+        .map-marker {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: #e74c3c;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.3s;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .map-marker:hover {
+            transform: scale(1.3);
+        }
+        
+        .map-info-window {
+            padding: 10px;
+        }
+        
+        .map-info-window h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .map-info-window p {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .map-info-window .distance {
+            color: #3498db;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        
+        .building-list {
+            margin-top: 30px;
+        }
+        
+        .building-list h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .building-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .building-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .building-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .building-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .building-card p {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .building-card .navigate-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        .navigate-btn:hover {
+            background-color: #219a52;
+        }
+        
+        .distance-info {
+            font-size: 12px;
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .amap-logo {
+            display: none !important;
+        }
+        
+        .amap-copyright {
+            display: none !important;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .building-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>校园地图</h1>
+                <div class="nav-buttons">
+                    <a href="index.html" class="btn btn-secondary">返回主页</a>
+                    <a href="login-select.html" class="btn btn-secondary">返回选择页面</a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="map-section">
+            <h2>校园地图</h2>
+            
+            <div class="map-tabs">
+                <button class="tab-btn active" onclick="switchMap('amap')">高德地图</button>
+                <button class="tab-btn" onclick="switchMap('static')">静态地图</button>
+                <button class="tab-btn" style="background-color: #27ae60;" onclick="getCurrentLocation()">📍 定位我的位置</button>
+                <button class="tab-btn" style="background-color: #e67e22;" onclick="showManualLocationInput()">📌 手动设置位置</button>
+            </div>
+            
+            <!-- 搜索框 -->
+            <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="search-input" placeholder="搜索地点（如：青软公司、清华大学、万达广场）" 
+                    style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                <button onclick="searchPlace()" style="padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">🔍 搜索</button>
+                <button onclick="openGaodeMapSearch()" style="padding: 10px 20px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">🌐 打开高德地图搜索</button>
+            </div>
+            
+            <!-- 搜索结果显示 -->
+            <div id="search-results" style="margin-bottom: 15px;"></div>
+            
+            <!-- 高德地图容器 -->
+            <div class="map-container" id="amap-container">
+                <div id="amap-map" style="width: 100%; height: 100%;"></div>
+            </div>
+            
+            <!-- 静态地图容器 -->
+            <div class="static-map-container" id="static-container">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=campus%20map%20with%20buildings%20and%20roads&image_size=landscape_16_9" alt="校园地图" class="map-image">
+                
+                <div class="map-marker" style="top: 30%; left: 20%;" data-building="library" title="图书馆"></div>
+                <div class="map-marker" style="top: 45%; left: 40%;" data-building="dormitory" title="学生宿舍"></div>
+                <div class="map-marker" style="top: 25%; left: 60%;" data-building="teaching" title="教学楼"></div>
+                <div class="map-marker" style="top: 50%; left: 75%;" data-building="canteen" title="食堂"></div>
+                <div class="map-marker" style="top: 65%; left: 30%;" data-building="gym" title="体育馆"></div>
+            </div>
+            
+            <div class="building-list">
+                <h3>主要建筑</h3>
+                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">点击卡片查看位置，点击导航按钮打开高德地图APP导航</p>
+                <div class="building-grid" id="building-grid">
+                    <div class="building-card" data-building="library" onclick="focusOnBuilding('library')">
+                        <h4>📚 图书馆</h4>
+                        <p>位置: 校园中心</p>
+                        <p>开放时间: 8:00-22:00</p>
+                        <p>功能: 借阅图书、自习</p>
+                        <p class="distance-info" id="distance-library">距离: 未定位</p>
+                        <button class="navigate-btn" onclick="navigateTo('library'); event.stopPropagation();">🧭 高德导航</button>
+                    </div>
+                    
+                    <div class="building-card" data-building="dormitory" onclick="focusOnBuilding('dormitory')">
+                        <h4>🏠 学生宿舍</h4>
+                        <p>位置: 校园北部</p>
+                        <p>开放时间: 24小时</p>
+                        <p>功能: 住宿</p>
+                        <p class="distance-info" id="distance-dormitory">距离: 未定位</p>
+                        <button class="navigate-btn" onclick="navigateTo('dormitory'); event.stopPropagation();">🧭 高德导航</button>
+                    </div>
+                    
+                    <div class="building-card" data-building="teaching" onclick="focusOnBuilding('teaching')">
+                        <h4>🏫 教学楼</h4>
+                        <p>位置: 校园南部</p>
+                        <p>开放时间: 7:00-22:00</p>
+                        <p>功能: 上课、自习</p>
+                        <p class="distance-info" id="distance-teaching">距离: 未定位</p>
+                        <button class="navigate-btn" onclick="navigateTo('teaching'); event.stopPropagation();">🧭 高德导航</button>
+                    </div>
+                    
+                    <div class="building-card" data-building="canteen" onclick="focusOnBuilding('canteen')">
+                        <h4>🍽️ 食堂</h4>
+                        <p>位置: 校园东部</p>
+                        <p>开放时间: 6:30-21:00</p>
+                        <p>功能: 就餐</p>
+                        <p class="distance-info" id="distance-canteen">距离: 未定位</p>
+                        <button class="navigate-btn" onclick="navigateTo('canteen'); event.stopPropagation();">🧭 高德导航</button>
+                    </div>
+                    
+                    <div class="building-card" data-building="gym" onclick="focusOnBuilding('gym')">
+                        <h4>🏃 体育馆</h4>
+                        <p>位置: 校园西部</p>
+                        <p>开放时间: 9:00-21:00</p>
+                        <p>功能: 体育活动</p>
+                        <p class="distance-info" id="distance-gym">距离: 未定位</p>
+                        <button class="navigate-btn" onclick="navigateTo('gym'); event.stopPropagation();">🧭 高德导航</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 校园建筑位置数据（示例坐标，实际需要根据真实校园位置调整）
+        const campusBuildings = {
+            library: {
+                name: '图书馆',
+                position: [116.397428, 39.90923],
+                description: '开放时间: 8:00-22:00',
+                function: '借阅图书、自习'
+            },
+            dormitory: {
+                name: '学生宿舍',
+                position: [116.397428, 39.91923],
+                description: '开放时间: 24小时',
+                function: '住宿'
+            },
+            teaching: {
+                name: '教学楼',
+                position: [116.398428, 39.89923],
+                description: '开放时间: 7:00-22:00',
+                function: '上课、自习'
+            },
+            canteen: {
+                name: '食堂',
+                position: [116.399428, 39.90923],
+                description: '开放时间: 6:30-21:00',
+                function: '就餐'
+            },
+            gym: {
+                name: '体育馆',
+                position: [116.396428, 39.88923],
+                description: '开放时间: 9:00-21:00',
+                function: '体育活动'
+            }
+        };
+        
+        let map = null;
+        let markers = [];
+        let infoWindows = [];
+        
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            
+            if (!studentInfo) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 初始化高德地图
+            initAMap();
+            
+            // 初始化静态地图标记事件
+            initStaticMapMarkers();
+        });
+        
+        // 切换地图显示
+        function switchMap(type) {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const amapContainer = document.getElementById('amap-container');
+            const staticContainer = document.getElementById('static-container');
+            
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+            
+            if (type === 'amap') {
+                tabBtns[0].classList.add('active');
+                amapContainer.style.display = 'block';
+                staticContainer.classList.remove('active');
+                
+                // 调整地图大小
+                if (map) {
+                    map.setMapStyle('amap://styles/normal');
+                }
+            } else {
+                tabBtns[1].classList.add('active');
+                amapContainer.style.display = 'none';
+                staticContainer.classList.add('active');
+            }
+        }
+        
+        // 初始化高德地图
+        function initAMap() {
+            // 检查高德地图API是否加载成功
+            if (typeof AMap === 'undefined') {
+                console.log('高德地图API加载中...');
+                setTimeout(initAMap, 1000);
+                return;
+            }
+            
+            // 创建地图实例
+            map = new AMap.Map('amap-map', {
+                zoom: 16,
+                center: [116.397428, 39.90923],
+                mapStyle: 'amap://styles/normal',
+                viewMode: '2D'
+            });
+            
+            // 添加建筑标记
+            addBuildingMarkers();
+            
+            // 添加定位控件
+            map.addControl(new AMap.ToolBar({
+                position: 'RB'
+            }));
+            
+            // 点击地图获取坐标
+            map.on('click', function(e) {
+                const lng = e.lnglat.getLng();
+                const lat = e.lnglat.getLat();
+                
+                // 询问是否设置当前位置
+                if (confirm('点击位置坐标：\n经度: ' + lng + '\n纬度: ' + lat + '\n\n是否设置为您的当前位置？')) {
+                    setManualLocation(lng, lat);
+                }
+            });
+            
+            map.addControl(new AMap.Scale({
+                position: 'LB'
+            }));
+        }
+        
+        // 添加建筑标记
+        function addBuildingMarkers() {
+            if (!map) return;
+            
+            for (const [key, building] of Object.entries(campusBuildings)) {
+                // 创建标记点
+                const marker = new AMap.Marker({
+                    position: building.position,
+                    title: building.name,
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(32, 32),
+                        image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                        imageSize: new AMap.Size(32, 32)
+                    }),
+                    offset: new AMap.Pixel(-16, -32)
+                });
+                
+                // 创建信息窗体
+                const infoWindow = new AMap.InfoWindow({
+                    isCustom: false,
+                    content: createInfoWindowContent(building),
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                // 绑定点击事件
+                marker.on('click', function() {
+                    infoWindow.open(map, marker.getPosition());
+                });
+                
+                marker.setMap(map);
+                markers.push(marker);
+                infoWindows.push(infoWindow);
+            }
+        }
+        
+        // 创建信息窗体内容
+        function createInfoWindowContent(building) {
+            return `
+                <div class="map-info-window">
+                    <h3>${building.name}</h3>
+                    <p>${building.description}</p>
+                    <p>${building.function}</p>
+                    <button class="navigate-btn" onclick="openAMapNavigation('${building.position[0]}', '${building.position[1]}', '${building.name}')">导航到这里</button>
+                </div>
+            `;
+        }
+        
+        // 聚焦到指定建筑
+        function focusOnBuilding(buildingKey) {
+            const building = campusBuildings[buildingKey];
+            if (!building || !map) return;
+            
+            // 切换到高德地图视图
+            switchMap('amap');
+            
+            // 移动到指定位置
+            map.setCenter(building.position);
+            map.setZoom(17);
+            
+            // 打开信息窗体
+            const markerIndex = Object.keys(campusBuildings).indexOf(buildingKey);
+            if (markerIndex >= 0 && infoWindows[markerIndex]) {
+                infoWindows[markerIndex].open(map, building.position);
+            }
+        }
+        
+        // 导航到指定位置
+        function navigateTo(buildingKey) {
+            const building = campusBuildings[buildingKey];
+            if (!building) return;
+            
+            // 切换到高德地图视图
+            switchMap('amap');
+            
+            // 聚焦到建筑
+            focusOnBuilding(buildingKey);
+            
+            // 打开高德地图导航
+            openAMapNavigation(building.position[0], building.position[1], building.name);
+        }
+        
+        // 打开高德地图APP或网页导航
+        function openAMapNavigation(lng, lat, name) {
+            // 尝试打开高德地图APP
+            const appUrl = `amap://navi?poi=${lng},${lat}&name=${encodeURIComponent(name)}&dev=0`;
+            const webUrl = `https://m.amap.com/navi/?dest=${lng},${lat}&destName=${encodeURIComponent(name)}&key=b26c6b4539ddef4ab53c95d07fe64cd9`;
+            
+            // 先尝试打开APP
+            window.location.href = appUrl;
+            
+            // 如果APP没有打开，3秒后打开网页版
+            setTimeout(function() {
+                window.open(webUrl, '_blank');
+            }, 3000);
+        }
+        
+        // 初始化静态地图标记事件
+        function initStaticMapMarkers() {
+            const markers = document.querySelectorAll('.map-marker');
+            
+            markers.forEach(marker => {
+                marker.addEventListener('click', function() {
+                    const building = this.dataset.building;
+                    focusOnBuilding(building);
+                });
+            });
+        }
+        
+        // 获取当前位置并显示在地图上
+        function getCurrentLocation() {
+            if (!map) {
+                alert('地图未加载，请稍后再试');
+                return;
+            }
+            
+            // 切换到高德地图视图
+            switchMap('amap');
+            
+            // 使用高德地图定位插件
+            AMap.plugin('AMap.Geolocation', function() {
+                const geolocation = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    buttonPosition: 'RB',
+                    buttonOffset: new AMap.Pixel(10, 20),
+                    showMarker: true,
+                    showCircle: true,
+                    panToLocation: true,
+                    zoomToAccuracy: true
+                });
+                
+                geolocation.getCurrentPosition(function(status, result) {
+                    if (status === 'complete') {
+                        onLocationSuccess(result);
+                    } else {
+                        onLocationError(result);
+                    }
+                });
+            });
+        }
+        
+        // 定位成功回调
+        function onLocationSuccess(result) {
+            const position = result.position;
+            
+            // 添加当前位置标记
+            const currentMarker = new AMap.Marker({
+                position: position,
+                icon: new AMap.Icon({
+                    size: new AMap.Size(40, 40),
+                    image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                    imageSize: new AMap.Size(40, 40),
+                    imageOffset: new AMap.Pixel(0, 0)
+                }),
+                offset: new AMap.Pixel(-20, -40),
+                title: '我的位置'
+            });
+            
+            // 清除之前的定位标记
+            if (window.currentLocationMarker) {
+                map.remove(window.currentLocationMarker);
+            }
+            
+            currentMarker.setMap(map);
+            window.currentLocationMarker = currentMarker;
+            
+            // 移动到当前位置
+            map.setCenter(position);
+            map.setZoom(17);
+            
+            // 显示位置信息
+            const infoWindow = new AMap.InfoWindow({
+                content: `
+                    <div class="map-info-window">
+                        <h3>📍 我的位置</h3>
+                        <p>经度: ${position.getLng()}</p>
+                        <p>纬度: ${position.getLat()}</p>
+                        <p>精度: ${result.accuracy ? result.accuracy.toFixed(2) + '米' : '未知'}</p>
+                    </div>
+                `,
+                offset: new AMap.Pixel(0, -30)
+            });
+            
+            infoWindow.open(map, position);
+            
+            // 显示成功提示
+            alert('定位成功！\n经度: ' + position.getLng() + '\n纬度: ' + position.getLat());
+            
+            // 更新所有建筑的距离
+            updateBuildingDistances(position);
+            
+            // 查找最近的建筑
+            findNearestBuilding(position);
+        }
+        
+        // 更新所有建筑的距离显示
+        function updateBuildingDistances(userPosition) {
+            for (const [key, building] of Object.entries(campusBuildings)) {
+                const distance = getDistance(
+                    userPosition.getLng(), userPosition.getLat(),
+                    building.position[0], building.position[1]
+                );
+                
+                const distanceEl = document.getElementById('distance-' + key);
+                if (distanceEl) {
+                    distanceEl.textContent = '距离: ' + formatDistance(distance);
+                    distanceEl.style.color = distance < 500 ? '#27ae60' : '#e74c3c';
+                }
+            }
+        }
+        
+        // 格式化距离
+        function formatDistance(meters) {
+            if (meters < 1000) {
+                return Math.round(meters) + '米';
+            } else {
+                return (meters / 1000).toFixed(1) + '公里';
+            }
+        }
+        
+        // 定位失败回调
+        function onLocationError(result) {
+            console.error('定位失败:', result);
+            let errorMsg = '定位失败，请检查以下情况：\n';
+            
+            if (result.error === 'PERMISSION_DENIED') {
+                errorMsg += '⚠️ 请允许浏览器获取您的位置信息\n';
+                errorMsg += '点击浏览器地址栏旁的图标，允许定位\n';
+            } else if (result.error === 'POSITION_UNAVAILABLE') {
+                errorMsg += '⚠️ 位置信息不可用\n';
+            } else if (result.error === 'TIMEOUT') {
+                errorMsg += '⚠️ 定位超时，请重试\n';
+            } else {
+                errorMsg += '⚠️ ' + (result.message || '未知错误') + '\n';
+            }
+            
+            errorMsg += '\n💡 提示：确保已开启GPS定位服务';
+            alert(errorMsg);
+        }
+        
+        // 查找最近的建筑
+        function findNearestBuilding(userPosition) {
+            let nearestBuilding = null;
+            let minDistance = Infinity;
+            
+            for (const [key, building] of Object.entries(campusBuildings)) {
+                const distance = getDistance(
+                    userPosition.getLng(), userPosition.getLat(),
+                    building.position[0], building.position[1]
+                );
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestBuilding = { key, ...building, distance };
+                }
+            }
+            
+            if (nearestBuilding) {
+                const confirmMsg = `距离您最近的建筑是：${nearestBuilding.name}\n距离约 ${Math.round(nearestBuilding.distance)} 米\n\n是否导航到这里？`;
+                
+                if (confirm(confirmMsg)) {
+                    navigateTo(nearestBuilding.key);
+                }
+            }
+        }
+        
+        // 计算两点之间的距离（米）
+        function getDistance(lng1, lat1, lng2, lat2) {
+            const R = 6371000; // 地球半径（米）
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+        
+        // 搜索地点
+        function searchPlace() {
+            const keyword = document.getElementById('search-input').value.trim();
+            
+            if (!keyword) {
+                alert('请输入要搜索的地点');
+                return;
+            }
+            
+            // 显示加载提示
+            document.getElementById('search-results').innerHTML = '<p style="color: #3498db; padding: 10px;">🔍 搜索中，请稍候...</p>';
+            
+            // 切换到高德地图视图
+            switchMap('amap');
+            
+            // 加载搜索插件
+            if (typeof AMap.PlaceSearch === 'undefined') {
+                AMap.plugin(['AMap.PlaceSearch'], function() {
+                    performSearch(keyword);
+                });
+            } else {
+                performSearch(keyword);
+            }
+        }
+        
+        // 执行搜索
+        function performSearch(keyword) {
+            try {
+                const placeSearch = new AMap.PlaceSearch({
+                    pageSize: 10,
+                    pageIndex: 1,
+                    city: '',  // 不限制城市，全国搜索
+                    citylimit: false,
+                    map: map,
+                    autoFitView: true,
+                    type: '商务住宅|风景名胜|科教文化|交通设施|医疗保健|体育休闲|政府机构|住宿服务|餐饮服务|购物服务|生活服务'
+                });
+                
+                // 搜索地点
+                placeSearch.search(keyword, function(status, result) {
+                    console.log('搜索状态:', status);
+                    console.log('搜索结果:', result);
+                    
+                    if (status === 'complete' && result && result.poiList) {
+                        displaySearchResults(result.poiList.pois);
+                    } else if (status === 'no_data') {
+                        document.getElementById('search-results').innerHTML = 
+                            '<p style="color: #e74c3c; padding: 10px;">未找到"' + keyword + '"相关地点<br><small>请尝试更通用的关键词</small></p>';
+                    } else {
+                        document.getElementById('search-results').innerHTML = 
+                            '<p style="color: #e74c3c; padding: 10px;">搜索失败: ' + status + '<br><small>请检查网络连接后重试</small></p>';
+                    }
+                });
+            } catch (e) {
+                console.error('搜索错误:', e);
+                document.getElementById('search-results').innerHTML = 
+                    '<p style="color: #e74c3c; padding: 10px;">搜索出错: ' + e.message + '</p>';
+            }
+        }
+        
+        // 显示搜索结果
+        function displaySearchResults(pois) {
+            const resultsContainer = document.getElementById('search-results');
+            
+            let html = '<div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 15px;">';
+            html += '<h4 style="margin-bottom: 15px; color: #2c3e50;">搜索结果（点击查看详情）</h4>';
+            html += '<div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">';
+            
+            pois.forEach((poi, index) => {
+                html += `
+                    <div class="search-result-item" onclick="showPoiDetail(${index})" 
+                        style="padding: 12px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: all 0.3s;"
+                        onmouseover="this.style.borderColor='#3498db'; this.style.backgroundColor='#f5f5f5';"
+                        onmouseout="this.style.borderColor='#eee'; this.style.backgroundColor='white';">
+                        <div style="font-weight: bold; color: #2c3e50; margin-bottom: 5px;">${poi.name}</div>
+                        <div style="font-size: 12px; color: #7f8c8d;">${poi.address || '地址未知'}</div>
+                        <div style="font-size: 12px; color: #3498db;">${poi.cityname || ''} ${poi.adname || ''}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            resultsContainer.innerHTML = html;
+            
+            // 保存POI数据供点击使用
+            window.currentPois = pois;
+        }
+        
+        // 显示POI详情
+        function showPoiDetail(index) {
+            const poi = window.currentPois[index];
+            if (!poi || !map) return;
+            
+            const position = [poi.location.lng, poi.location.lat];
+            
+            // 清除之前的搜索标记
+            if (window.searchMarkers) {
+                window.searchMarkers.forEach(marker => map.remove(marker));
+            }
+            window.searchMarkers = [];
+            
+            // 添加新标记
+            const marker = new AMap.Marker({
+                position: position,
+                title: poi.name,
+                icon: new AMap.Icon({
+                    size: new AMap.Size(36, 36),
+                    image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                    imageSize: new AMap.Size(36, 36)
+                }),
+                offset: new AMap.Pixel(-18, -36)
+            });
+            
+            marker.setMap(map);
+            window.searchMarkers.push(marker);
+            
+            // 移动到位置
+            map.setCenter(position);
+            map.setZoom(16);
+            
+            // 显示信息窗体
+            const infoWindow = new AMap.InfoWindow({
+                content: `
+                    <div class="map-info-window">
+                        <h3>${poi.name}</h3>
+                        <p>地址: ${poi.address || '未知'}</p>
+                        <p>城市: ${poi.cityname || '未知'}</p>
+                        <p>区域: ${poi.adname || '未知'}</p>
+                        <button class="navigate-btn" onclick="openExternalNavigation('${poi.location.lng}', '${poi.location.lat}', '${poi.name}')">
+                            🧭 导航到这里
+                        </button>
+                    </div>
+                `,
+                offset: new AMap.Pixel(0, -30)
+            });
+            
+            infoWindow.open(map, position);
+        }
+        
+        // 打开外部导航
+        function openExternalNavigation(lng, lat, name) {
+            const appUrl = `amap://navi?poi=${lng},${lat}&name=${encodeURIComponent(name)}&dev=0`;
+            const webUrl = `https://m.amap.com/navi/?dest=${lng},${lat}&destName=${encodeURIComponent(name)}&key=b26c6b4539ddef4ab53c95d07fe64cd9`;
+            
+            // 尝试打开APP
+            window.location.href = appUrl;
+            
+            // 3秒后打开网页版
+            setTimeout(function() {
+                window.open(webUrl, '_blank');
+            }, 3000);
+        }
+        
+        // 打开高德地图网页版搜索
+        function openGaodeMapSearch() {
+            const keyword = document.getElementById('search-input').value.trim();
+            
+            if (!keyword) {
+                alert('请先输入要搜索的地点');
+                return;
+            }
+            
+            // 打开高德地图网页版
+            const searchUrl = `https://www.amap.com/search?query=${encodeURIComponent(keyword)}`;
+            window.open(searchUrl, '_blank');
+        }
+        
+        // 清除搜索结果
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            
+            // 清除搜索标记
+            if (window.searchMarkers && map) {
+                window.searchMarkers.forEach(marker => map.remove(marker));
+                window.searchMarkers = [];
+            }
+        }
+        
+        // 回车搜索
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPlace();
+            }
+        });
+        
+        // 显示手动设置位置输入框
+        function showManualLocationInput() {
+            const input = prompt('请输入您的坐标（格式：经度,纬度）\n例如：116.397428,39.90923\n\n提示：可在高德地图网页版搜索地点后获取坐标');
+            
+            if (input) {
+                const coords = input.split(',');
+                if (coords.length === 2) {
+                    const lng = parseFloat(coords[0].trim());
+                    const lat = parseFloat(coords[1].trim());
+                    
+                    if (!isNaN(lng) && !isNaN(lat) && lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+                        setManualLocation(lng, lat);
+                    } else {
+                        alert('坐标格式不正确，请确保输入有效的经纬度');
+                    }
+                } else {
+                    alert('格式错误，请使用英文逗号分隔，例如：116.397428,39.90923');
+                }
+            }
+        }
+        
+        // 设置手动位置
+        function setManualLocation(lng, lat) {
+            if (!map) {
+                alert('地图未加载，请稍后再试');
+                return;
+            }
+            
+            switchMap('amap');
+            
+            const position = new AMap.LngLat(lng, lat);
+            
+            // 添加当前位置标记
+            const currentMarker = new AMap.Marker({
+                position: position,
+                icon: new AMap.Icon({
+                    size: new AMap.Size(40, 40),
+                    image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                    imageSize: new AMap.Size(40, 40)
+                }),
+                offset: new AMap.Pixel(-20, -40),
+                title: '我的位置（手动设置）'
+            });
+            
+            // 清除之前的定位标记
+            if (window.currentLocationMarker) {
+                map.remove(window.currentLocationMarker);
+            }
+            
+            currentMarker.setMap(map);
+            window.currentLocationMarker = currentMarker;
+            
+            // 移动到当前位置
+            map.setCenter(position);
+            map.setZoom(17);
+            
+            // 显示信息
+            const infoWindow = new AMap.InfoWindow({
+                content: `
+                    <div class="map-info-window">
+                        <h3>📍 我的位置（手动设置）</h3>
+                        <p>经度: ${lng}</p>
+                        <p>纬度: ${lat}</p>
+                    </div>
+                `,
+                offset: new AMap.Pixel(0, -30)
+            });
+            
+            infoWindow.open(map, position);
+            
+            alert('位置已设置！\n经度: ' + lng + '\n纬度: ' + lat);
+            
+            // 更新建筑距离
+            updateBuildingDistances(position);
+            
+            // 查找最近的建筑
+            findNearestBuilding(position);
+        }
+    </script>
+</body>
+</html>

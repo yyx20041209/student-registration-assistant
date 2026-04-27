@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园地图 - 高德版</title>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '',
+        }
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b26c6b4539ddef4ab53c95d07fe64cd9"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .search-box button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .search-box button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .building-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .building-list h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .school-name {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .building-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .building-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .building-card h3 {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .building-card p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .building-card .distance {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        
+        .building-card .navigate-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .building-card .navigate-btn:hover {
+            background: #219a52;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            height: 600px;
+        }
+        
+        #amap-map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .tips {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .tips p {
+            color: #856404;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            padding: 6px 12px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .category-btn:hover, .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .user-location {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .user-location.show {
+            display: block;
+        }
+        
+        .user-location h4 {
+            color: #2e7d32;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .user-location p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .user-location button {
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .logout-btn {
+            float: right;
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+            <h1>🏫 校园地图</h1>
+            <div class="search-box">
+                <input type="text" id="school-input" placeholder="输入学校名称（如：青岛大学、山东大学）" 
+                    onkeypress="if(event.key==='Enter')searchSchool()">
+                <button onclick="searchSchool()">🔍 搜索学校</button>
+                <button onclick="openGaodeSearch()" style="background: #e74c3c;">🌐 高德官网搜索</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="building-list">
+                <h2>🏢 校园建筑</h2>
+                
+                <div class="tips">
+                    <p>💡 使用说明：</p>
+                    <p>1. 先在上方搜索您的学校</p>
+                    <p>2. 点击建筑卡片查看位置</p>
+                    <p>3. 点击导航按钮打开高德地图APP</p>
+                </div>
+                
+                <div class="user-location" id="user-location">
+                    <h4>📍 您的位置</h4>
+                    <p>经度: <span id="user-lng">-</span></p>
+                    <p>纬度: <span id="user-lat">-</span></p>
+                    <button onclick="setUserLocation()">📍 设置我的位置</button>
+                </div>
+                
+                <div class="category-tabs" id="category-tabs">
+                    <button class="category-btn active" onclick="filterBuildings('all')">全部</button>
+                    <button class="category-btn" onclick="filterBuildings('library')">图书馆</button>
+                    <button class="category-btn" onclick="filterBuildings('dorm')">宿舍</button>
+                    <button class="category-btn" onclick="filterBuildings('canteen')">食堂</button>
+                    <button class="category-btn" onclick="filterBuildings('teaching')">教学楼</button>
+                    <button class="category-btn" onclick="filterBuildings('sports')">体育馆</button>
+                </div>
+                
+                <div id="buildings-container">
+                    <p style="color: #999; text-align: center; padding: 40px;">
+                        请先搜索学校名称
+                    </p>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <div id="amap-map"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let map = null;
+        let schoolLocation = null;
+        let allBuildings = [];
+        let currentFilter = 'all';
+        let userLocation = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentInfo = localStorage.getItem('studentInfo');
+            if (!studentInfo) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            initMap();
+        });
+        
+        function initMap() {
+            if (typeof AMap === 'undefined') {
+                setTimeout(initMap, 1000);
+                return;
+            }
+            
+            map = new AMap.Map('amap-map', {
+                zoom: 14,
+                center: [120.38, 36.06],
+                mapStyle: 'amap://styles/normal'
+            });
+            
+            map.addControl(new AMap.ToolBar({ position: 'RB' }));
+            map.addControl(new AMap.Scale({ position: 'LB' }));
+            
+            map.on('click', function(e) {
+                const lng = e.lnglat.getLng();
+                const lat = e.lnglat.getLat();
+                if (confirm('设置当前位置？\n经度: ' + lng + '\n纬度: ' + lat)) {
+                    userLocation = { lng, lat };
+                    document.getElementById('user-location').classList.add('show');
+                    document.getElementById('user-lng').textContent = lng;
+                    document.getElementById('user-lat').textContent = lat;
+                    updateBuildingDistances();
+                }
+            });
+        }
+        
+        function searchSchool() {
+            const schoolName = document.getElementById('school-input').value.trim();
+            if (!schoolName) {
+                alert('请输入学校名称');
+                return;
+            }
+            
+            const container = document.getElementById('buildings-container');
+            container.innerHTML = '<p style="color: #667eea; text-align: center; padding: 20px;">🔍 搜索中，请稍候...</p>';
+            
+            if (typeof AMap.PlaceSearch === 'undefined') {
+                AMap.plugin(['AMap.PlaceSearch'], function() {
+                    doSearch(schoolName);
+                });
+            } else {
+                doSearch(schoolName);
+            }
+        }
+        
+        function doSearch(schoolName) {
+            try {
+                const placeSearch = new AMap.PlaceSearch({
+                    city: '',
+                    citylimit: false,
+                    type: '高等院校',
+                    pageSize: 5,
+                    pageIndex: 1
+                });
+                
+                placeSearch.search(schoolName, function(status, result) {
+                    console.log('搜索状态:', status);
+                    console.log('结果:', result);
+                    
+                    if (status === 'complete' && result.poiList && result.poiList.pois.length > 0) {
+                        const school = result.poiList.pois[0];
+                        schoolLocation = {
+                            name: school.name,
+                            lng: school.location.lng,
+                            lat: school.location.lat
+                        };
+                        
+                        document.getElementById('buildings-container').innerHTML = 
+                            '<p style="color: #27ae60; text-align: center; padding: 20px;">✅ 已找到: ' + school.name + '<br>正在加载周边建筑...</p>';
+                        
+                        map.setCenter([school.location.lng, school.location.lat]);
+                        map.setZoom(16);
+                        
+                        addSchoolMarker(school);
+                        searchNearbyBuildings(school.location.lng, school.location.lat);
+                    } else {
+                        document.getElementById('buildings-container').innerHTML = 
+                            '<p style="color: #e74c3c; text-align: center; padding: 20px;">❌ 未找到"' + schoolName + '"<br>请尝试其他学校名称</p>';
+                    }
+                });
+            } catch(e) {
+                console.error('搜索错误:', e);
+                document.getElementById('buildings-container').innerHTML = 
+                    '<p style="color: #e74c3c; text-align: center; padding: 20px;">❌ 搜索出错: ' + e.message + '</p>';
+            }
+        }
+        
+        function addSchoolMarker(school) {
+            const marker = new AMap.Marker({
+                position: [school.location.lng, school.location.lat],
+                title: school.name,
+                icon: new AMap.Icon({
+                    size: new AMap.Size(40, 40),
+                    image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                    imageSize: new AMap.Size(40, 40)
+                }),
+                offset: new AMap.Pixel(-20, -40)
+            });
+            
+            const infoWindow = new AMap.InfoWindow({
+                content: `<div style="padding: 10px;"><h3>🎓 ${school.name}</h3><p>${school.address || ''}</p></div>`,
+                offset: new AMap.Pixel(0, -30)
+            });
+            
+            marker.on('click', function() {
+                infoWindow.open(map, marker.getPosition());
+            });
+            
+            marker.setMap(map);
+        }
+        
+        function searchNearbyBuildings(lng, lat) {
+            AMap.plugin('AMap.PlaceSearch', function() {
+                const placeSearch = new AMap.PlaceSearch({
+                    city: '',
+                    citylimit: false,
+                    type: '图书馆|高等院校|中学|小学|宿舍|餐馆|食堂|体育场馆|风景名胜',
+                    pageSize: 50,
+                    pageIndex: 1
+                });
+                
+                placeSearch.searchNearBy('', [lng, lat], 1000, function(status, result) {
+                    if (status === 'complete' && result.poiList) {
+                        processBuildings(result.poiList.pois);
+                    }
+                });
+            });
+        }
+        
+        function processBuildings(pois) {
+            allBuildings = [];
+            
+            const typeMap = {
+                'library': ['图书馆', '图书'],
+                'dorm': ['宿舍', '公寓', '公寓楼'],
+                'canteen': ['食堂', '餐厅', '餐馆', '餐饮'],
+                'teaching': ['教学楼', '教学楼', '学院', '实验楼', '行政楼'],
+                'sports': ['体育馆', '体育场', '运动场', '操场']
+            };
+            
+            const iconMap = {
+                'library': '📚',
+                'dorm': '🏠',
+                'canteen': '🍽️',
+                'teaching': '🏫',
+                'sports': '🏃'
+            };
+            
+            pois.forEach((poi, index) => {
+                let category = 'other';
+                for (const [cat, keywords] of Object.entries(typeMap)) {
+                    if (keywords.some(k => poi.name.includes(k))) {
+                        category = cat;
+                        break;
+                    }
+                }
+                
+                if (poi.name.includes('大学') || poi.name.includes('学院')) {
+                    if (!poi.name.includes('宿舍') && !poi.name.includes('食堂') && !poi.name.includes('图书馆')) {
+                        return;
+                    }
+                }
+                
+                allBuildings.push({
+                    id: index,
+                    name: poi.name,
+                    address: poi.address || '无地址信息',
+                    lng: poi.location.lng,
+                    lat: poi.location.lat,
+                    category: category,
+                    icon: iconMap[category] || '📍'
+                });
+            });
+            
+            allBuildings = allBuildings.slice(0, 20);
+            
+            addBuildingMarkers();
+            renderBuildingList();
+        }
+        
+        function addBuildingMarkers() {
+            map.getAllOverlays().forEach(overlay => {
+                if (overlay instanceof AMap.Marker) {
+                    map.remove(overlay);
+                }
+            });
+            
+            const categoryColors = {
+                'library': '#3498db',
+                'dorm': '#9b59b6',
+                'canteen': '#e67e22',
+                'teaching': '#1abc9c',
+                'sports': '#e74c3c',
+                'other': '#95a5a6'
+            };
+            
+            allBuildings.forEach(building => {
+                const marker = new AMap.Marker({
+                    position: [building.lng, building.lat],
+                    title: building.name,
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(30, 30),
+                        image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+                        imageSize: new AMap.Size(30, 30)
+                    }),
+                    offset: new AMap.Pixel(-15, -30)
+                });
+                
+                const infoWindow = new AMap.InfoWindow({
+                    content: `
+                        <div style="padding: 10px; max-width: 250px;">
+                            <h3>${building.icon} ${building.name}</h3>
+                            <p>地址: ${building.address}</p>
+                            <button onclick="navigateToBuilding('${building.lng}', '${building.lat}', '${building.name}')" 
+                                style="margin-top: 10px; padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🧭 导航
+                            </button>
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                marker.on('click', function() {
+                    infoWindow.open(map, marker.getPosition());
+                });
+                
+                marker.setMap(map);
+            });
+            
+            if (schoolLocation) {
+                addSchoolMarker({ location: { lng: schoolLocation.lng, lat: schoolLocation.lat }, name: schoolLocation.name, address: '' });
+            }
+        }
+        
+        function renderBuildingList() {
+            const container = document.getElementById('buildings-container');
+            
+            const filtered = currentFilter === 'all' 
+                ? allBuildings 
+                : allBuildings.filter(b => b.category === currentFilter);
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">暂无该类型建筑</p>';
+                return;
+            }
+            
+            let html = '';
+            if (schoolLocation) {
+                html += `<p class="school-name">当前学校: ${schoolLocation.name}</p>`;
+            }
+            
+            filtered.forEach(building => {
+                let distance = '';
+                if (userLocation) {
+                    const dist = getDistance(userLocation.lng, userLocation.lat, building.lng, building.lat);
+                    distance = dist < 1000 ? `距离: ${Math.round(dist)}米` : `距离: ${(dist/1000).toFixed(1)}公里`;
+                }
+                
+                html += `
+                    <div class="building-card" onclick="focusBuilding(${building.lng}, ${building.lat})">
+                        <h3>${building.icon} ${building.name}</h3>
+                        <p>${building.address}</p>
+                        ${distance ? `<p class="distance">${distance}</p>` : ''}
+                        <button class="navigate-btn" onclick="event.stopPropagation(); navigateToBuilding('${building.lng}', '${building.lat}', '${building.name}')">
+                            🧭 高德导航
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function filterBuildings(category) {
+            currentFilter = category;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderBuildingList();
+        }
+        
+        function focusBuilding(lng, lat) {
+            map.setCenter([lng, lat]);
+            map.setZoom(17);
+        }
+        
+        function navigateToBuilding(lng, lat, name) {
+            const appUrl = `amap://navi?poi=${lng},${lat}&name=${encodeURIComponent(name)}&dev=0`;
+            const webUrl = `https://m.amap.com/navi/?dest=${lng},${lat}&destName=${encodeURIComponent(name)}&key=b26c6b4539ddef4ab53c95d07fe64cd9`;
+            
+            window.location.href = appUrl;
+            setTimeout(() => {
+                window.open(webUrl, '_blank');
+            }, 2000);
+        }
+        
+        function setUserLocation() {
+            alert('请在地图上点击您所在的位置');
+        }
+        
+        function updateBuildingDistances() {
+            renderBuildingList();
+        }
+        
+        function getDistance(lng1, lat1, lng2, lat2) {
+            const R = 6371000;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function logout() {
+            if (confirm('确定退出登录？')) {
+                localStorage.removeItem('studentInfo');
+                window.location.href = 'login-select.html';
+            }
+        }
+        
+        function openGaodeSearch() {
+            const schoolName = document.getElementById('school-input').value.trim();
+            const url = schoolName 
+                ? `https://www.amap.com/search?query=${encodeURIComponent(schoolName)}`
+                : 'https://www.amap.com/';
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
