@@ -3,6 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from myapp.models import Student, RegistrationTask, FAQ, Dormitory, StudentDormitory
 import json
+from django.db import models
 from django.db.models import Q
 
 @require_http_methods(["GET"])
@@ -347,20 +348,49 @@ def admin_dashboard(request):
         if status:
             query = query.filter(status=status)
         if search:
-            query = query.filter(models.Q(student_id__icontains=search) | models.Q(name__icontains=search))
+            query = query.filter(Q(student_id__icontains=search) | Q(name__icontains=search))
         
-        # 统计数据
-        total_count = Student.objects.count()
-        completed_count = Student.objects.filter(status='COMPLETED').count()
-        in_progress_count = Student.objects.filter(status='IN_PROGRESS').count()
-        unregistered_count = Student.objects.filter(status='UNREGISTERED').count()
+        # 获取筛选后的学生列表，实时计算每个学生的实际状态
+        filtered_students = list(query)
+        real_time_stats = {'total': 0, 'completed': 0, 'in_progress': 0, 'unregistered': 0}
+        
+        for student in filtered_students:
+            # 实时获取学生的任务状态
+            tasks = RegistrationTask.objects.filter(student=student)
+            if tasks.count() == 0:
+                # 没有任务，视为未报到
+                real_time_status = 'UNREGISTERED'
+            else:
+                completed_tasks = tasks.filter(status='COMPLETED').count()
+                total_tasks = tasks.count()
+                if completed_tasks == total_tasks:
+                    real_time_status = 'COMPLETED'
+                elif completed_tasks > 0:
+                    real_time_status = 'IN_PROGRESS'
+                else:
+                    real_time_status = 'UNREGISTERED'
+            
+            # 更新实时统计
+            real_time_stats['total'] += 1
+            if real_time_status == 'COMPLETED':
+                real_time_stats['completed'] += 1
+            elif real_time_status == 'IN_PROGRESS':
+                real_time_stats['in_progress'] += 1
+            else:
+                real_time_stats['unregistered'] += 1
+        
+        # 使用实时统计数据
+        total_count = real_time_stats['total']
+        completed_count = real_time_stats['completed']
+        in_progress_count = real_time_stats['in_progress']
+        unregistered_count = real_time_stats['unregistered']
         
         # 计算报到率
         registration_rate = (completed_count / total_count * 100) if total_count > 0 else 0
         
         # 获取学生列表
         students = []
-        for student in query:
+        for student in filtered_students:
             # 获取学生的任务状态
             tasks = RegistrationTask.objects.filter(student=student)
             task_status = {}
